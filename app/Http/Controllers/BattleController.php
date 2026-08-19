@@ -29,7 +29,15 @@ class BattleController extends Controller
             ->where('player_a_id', $userId)
             ->orWhere('player_b_id', $userId)
             ->orderByDesc('created_at')
-            ->get(['id', 'mode', 'model_a', 'model_b', 'a_hp', 'b_hp', 'status', 'winner', 'created_at', 'finished_at']);
+            ->get(['id', 'mode', 'player_a_id', 'model_a', 'model_b', 'a_hp', 'b_hp', 'status', 'winner', 'created_at', 'finished_at'])
+            ->map(function (Battle $b) use ($userId) {
+                $yourSide = $b->player_a_id === $userId ? 'a' : 'b';
+
+                return array_merge(
+                    $b->only(['id', 'mode', 'model_a', 'model_b', 'a_hp', 'b_hp', 'status', 'winner', 'created_at', 'finished_at']),
+                    ['your_side' => $yourSide]
+                );
+            });
 
         return response()->json(['battles' => $battles]);
     }

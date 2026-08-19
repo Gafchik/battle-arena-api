@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 class PvpBattleService
 {
-    private const ROUND_TIMEOUT_SECONDS = 20;
+    private const ROUND_TIMEOUT_SECONDS = 60;
 
     public function __construct(
         private readonly BattleEngine $engine,
