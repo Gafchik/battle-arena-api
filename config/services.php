@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    'routmy' => [
+        'api_key' => env('ROUTMY_API_KEY'),
+        'base_url' => env('ROUTMY_BASE_URL', 'https://api.rout.my/v1'),
+        'training_model' => env('ROUTMY_TRAINING_MODEL', 'nvidia/nemotron-3-ultra'),
+    ],
+
+    'telegram' => [
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+    ],
+
 ];
