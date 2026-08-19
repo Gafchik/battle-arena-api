@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SubmitMoveRequest;
 use App\Models\Battle;
 use App\Models\BattleRound;
+use App\Models\User;
 use App\Services\Battle\Move;
 use App\Services\Battle\PveBattleService;
 use App\Services\Battle\PvpBattleService;
@@ -138,7 +139,7 @@ class BattleController extends Controller
     }
 
     /**
-     * @return array{your_side?: string, my_pending_submitted?: bool, round_deadline_at?: ?string}
+     * @return array{your_side?: string, my_pending_submitted?: bool, round_deadline_at?: ?string, opponent?: ?array}
      */
     private function pvpMeta(Request $request, Battle $battle): array
     {
@@ -147,11 +148,17 @@ class BattleController extends Controller
         }
 
         $side = $request->user()->id === $battle->player_a_id ? 'a' : 'b';
+        $opponentId = $side === 'a' ? $battle->player_b_id : $battle->player_a_id;
+
+        $opponent = $opponentId === null
+            ? null
+            : User::query()->where('id', $opponentId)->first(['first_name', 'username', 'photo_url']);
 
         return [
             'your_side' => $side,
             'my_pending_submitted' => $battle->{"{$side}_pending_attack"} !== null,
             'round_deadline_at' => $battle->round_deadline_at,
+            'opponent' => $opponent,
         ];
     }
 }

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['telegram_id', 'username', 'first_name', 'coins', 'level'])]
+#[Fillable(['telegram_id', 'username', 'photo_url', 'first_name', 'coins', 'level'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */

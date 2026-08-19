@@ -38,6 +38,7 @@ class ValidateTelegramInitData
             ['telegram_id' => $tgUser['id']],
             [
                 'username' => $tgUser['username'] ?? null,
+                'photo_url' => $tgUser['photo_url'] ?? null,
                 'first_name' => $tgUser['first_name'] ?? 'Player',
             ]
         );
