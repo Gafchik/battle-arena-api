@@ -9,5 +9,6 @@ Route::middleware('telegram.auth')->group(function () {
     Route::post('/battles/training', [BattleController::class, 'startTraining']);
     Route::post('/battles/challenge', [BattleController::class, 'challenge']);
     Route::post('/battles/{battle}/join', [BattleController::class, 'join']);
+    Route::post('/battles/{battle}/cancel', [BattleController::class, 'cancel']);
     Route::post('/battles/{battle}/move', [BattleController::class, 'move']);
 });

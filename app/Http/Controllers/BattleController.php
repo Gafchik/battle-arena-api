@@ -77,6 +77,23 @@ class BattleController extends Controller
         return response()->json(['battle' => $battle->only(['id', 'mode', 'status'])]);
     }
 
+    public function cancel(Request $request, int $battleId): JsonResponse
+    {
+        $battle = Battle::query()->where('id', $battleId)->first(['id', 'player_a_id', 'status']);
+
+        if ($battle === null) {
+            return response()->json(['error' => ['message' => 'Challenge not found']], 404);
+        }
+
+        try {
+            $this->pvp->cancel($battle, $request->user());
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => ['message' => $e->getMessage()]], 400);
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
     public function join(Request $request, int $battleId): JsonResponse
     {
         $battle = Battle::query()->where('id', $battleId)->first(['id', 'player_a_id', 'player_b_id', 'status']);

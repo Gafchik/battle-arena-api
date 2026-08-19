@@ -28,6 +28,19 @@ class PvpBattleService
         ]);
     }
 
+    public function cancel(Battle $battle, User $user): void
+    {
+        if ($battle->player_a_id !== $user->id) {
+            throw new \RuntimeException('You can only cancel your own challenge.');
+        }
+
+        if ($battle->status !== 'waiting_for_opponent') {
+            throw new \RuntimeException('This challenge can no longer be cancelled.');
+        }
+
+        Battle::where('id', $battle->id)->delete();
+    }
+
     public function join(Battle $battle, User $user): Battle
     {
         if ($battle->status !== 'waiting_for_opponent') {
