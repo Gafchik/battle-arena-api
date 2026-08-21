@@ -54,6 +54,14 @@ class BattleController extends Controller
             return response()->json(['error' => ['message' => 'Battle not found']], 404);
         }
 
+        if ($battle->mode === 'pvp' && $battle->status === 'waiting_for_opponent') {
+            $battle = $this->pvp->expireIfStale($battle);
+
+            if ($battle === null) {
+                return response()->json(['error' => ['message' => 'Battle not found']], 404);
+            }
+        }
+
         if ($battle->mode === 'pvp' && $battle->status === 'in_progress') {
             $battle = $this->pvp->resolveIfTimedOut($battle);
         }
@@ -82,7 +90,12 @@ class BattleController extends Controller
     {
         $battle = $this->pvp->challenge($request->user());
 
-        return response()->json(['battle' => $battle->only(['id', 'mode', 'status'])]);
+        return response()->json([
+            'battle' => array_merge(
+                $battle->only(['id', 'mode', 'status']),
+                ['challenge_expires_at' => $this->pvp->challengeExpiresAt($battle)?->toIso8601String()],
+            ),
+        ]);
     }
 
     public function cancel(Request $request, int $battleId): JsonResponse
@@ -104,7 +117,11 @@ class BattleController extends Controller
 
     public function join(Request $request, int $battleId): JsonResponse
     {
-        $battle = Battle::query()->where('id', $battleId)->first(['id', 'player_a_id', 'player_b_id', 'status']);
+        $battle = Battle::query()->where('id', $battleId)->first(['id', 'player_a_id', 'player_b_id', 'status', 'created_at']);
+
+        if ($battle !== null) {
+            $battle = $this->pvp->expireIfStale($battle);
+        }
 
         if ($battle === null) {
             return response()->json(['error' => ['message' => 'Challenge not found']], 404);
@@ -170,6 +187,13 @@ class BattleController extends Controller
     {
         if ($battle->mode !== 'pvp') {
             return [];
+        }
+
+        if ($battle->status === 'waiting_for_opponent') {
+            return [
+                'your_side' => 'a',
+                'challenge_expires_at' => $this->pvp->challengeExpiresAt($battle)?->toIso8601String(),
+            ];
         }
 
         $side = $request->user()->id === $battle->player_a_id ? 'a' : 'b';

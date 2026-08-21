@@ -11,13 +11,34 @@ class PvpBattleService
 {
     private const ROUND_TIMEOUT_SECONDS = 60;
 
+    public const CHALLENGE_TIMEOUT_SECONDS = 300;
+
     public function __construct(
         private readonly BattleEngine $engine,
     ) {
     }
 
+    /**
+     * Resumes the player's still-open challenge if one exists, instead of
+     * spawning a duplicate every time they tap "Challenge a friend".
+     */
     public function challenge(User $user): Battle
     {
+        $existing = Battle::query()
+            ->where('mode', 'pvp')
+            ->where('player_a_id', $user->id)
+            ->where('status', 'waiting_for_opponent')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($existing !== null) {
+            $existing = $this->expireIfStale($existing);
+
+            if ($existing !== null) {
+                return $existing;
+            }
+        }
+
         return Battle::create([
             'mode' => 'pvp',
             'player_a_id' => $user->id,
@@ -39,6 +60,35 @@ class PvpBattleService
         }
 
         Battle::where('id', $battle->id)->delete();
+    }
+
+    /**
+     * Deletes a challenge that nobody joined within CHALLENGE_TIMEOUT_SECONDS
+     * of its creation. Returns null when the battle was (or already was)
+     * expired away, otherwise returns it unchanged.
+     */
+    public function expireIfStale(Battle $battle): ?Battle
+    {
+        if ($battle->status !== 'waiting_for_opponent') {
+            return $battle;
+        }
+
+        if ($battle->created_at->copy()->addSeconds(self::CHALLENGE_TIMEOUT_SECONDS)->isFuture()) {
+            return $battle;
+        }
+
+        Battle::where('id', $battle->id)->delete();
+
+        return null;
+    }
+
+    public function challengeExpiresAt(Battle $battle): ?\Illuminate\Support\Carbon
+    {
+        if ($battle->status !== 'waiting_for_opponent') {
+            return null;
+        }
+
+        return $battle->created_at->copy()->addSeconds(self::CHALLENGE_TIMEOUT_SECONDS);
     }
 
     public function join(Battle $battle, User $user): Battle
